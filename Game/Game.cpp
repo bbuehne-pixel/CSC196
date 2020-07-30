@@ -5,53 +5,115 @@
 #include "Graphics/Shape.h"
 #include "Actors/Player.h"
 #include "Actors/Enemy.h"
+#include "Actors/Locator.h"
 #include "Object/Scene.h"
 #include "Graphics/ParticleSystem.h"
+#include "Audio/AudioSystem.h"
 #include <iostream>
 #include <string>
-#include <list>
+#include <array>
 
 void Game::Initialize()
 {
-    // initialize engine
     m_scene.Startup();
-    g_particleSystem.Startup();
-    nc::Actor* player = new nc::Player;
-    player->Load("player.txt");
-    m_scene.AddActor(player);
-
-    for (size_t i = 0; i < 10; i++)
-    {
-        nc::Actor* e = new nc::Enemy;
-        e->Load("enemy.txt");
-
-        nc::Enemy* enemy = dynamic_cast<nc::Enemy*>(e);
-        enemy->SetTarget(player);
-        enemy->SetSpeed(nc::random(50, 100));
-
-        e->GetTransform().position = nc::Vector2{ nc::random(0, 800), nc::random(0, 600) };
-        m_scene.AddActor(e);
-    }
+    m_scene.SetGame(this);
 }
 
 bool Game::Update(float dt)
 {
     m_frametime = dt;
-
     bool quit = Core::Input::IsPressed(Core::Input::KEY_ESCAPE);
 
-    m_spawnTimer += dt;
-    if (m_spawnTimer >= 3.0f)
+    switch (m_state)
     {
-        m_spawnTimer = 0;
+    case Game::eState::TITLE:
+        if (Core::Input::IsPressed(VK_SPACE))
+        {
+            m_state = eState::START_GAME;
+        }
+        break;
+    case::Game::eState::INIT_GAME:
+        m_score = 0;
+        m_lives = 3;
+        m_state = eState::START_GAME;
+        break;
+    case Game::eState::START_GAME:
+    {
+        nc::Player* player = new nc::Player;
+        player->Load("player.txt");
+        m_scene.AddActor(player);
 
-        nc::Enemy* enemy = new nc::Enemy;
-        enemy->Load("enemy.txt");
-        enemy->SetTarget(m_scene.GetActor<nc::Player>());
-        enemy->GetTransform().position = nc::Vector2{ nc::random(0, 800), nc::random(0, 600) };
-        m_scene.AddActor(enemy);
+        Locator* locator = new Locator;
+        locator->GetTransform().position = nc::Vector2{ 5, 2 };
+        //locator->GetTransform().angle = nc::DegreesToRadians(90);
+        player->AddChild(locator);
+
+        locator = new Locator;
+        locator->GetTransform().position = nc::Vector2{ -5, 2 };
+        //locator->GetTransform().angle = nc::DegreesToRadians(90);
+        player->AddChild(locator);
+
+        for (size_t i = 0; i < 3; i++)
+        {
+            nc::Enemy* enemy = new nc::Enemy;
+            enemy->Load("enemy.txt");
+            enemy->SetTarget(m_scene.GetActor<nc::Player>());
+            float distance = nc::random(300, 600);
+            float angle = nc::random(0, nc::TWO_PI);
+            nc::Vector2 position = nc::Vector2::Rotate({ 0.0f, distance }, angle);
+            enemy->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
+            m_scene.AddActor(enemy);
+        }
+        m_state = eState::GAME;
+    }
+        break;
+    case Game::eState::GAME:
+        m_spawnTimer += dt;
+        if (m_spawnTimer >= 3.0f)
+        {
+            m_spawnTimer = 0;
+
+            nc::Enemy* enemy = new nc::Enemy;
+            enemy->Load("enemy.txt");
+            enemy->SetTarget(m_scene.GetActor<nc::Player>());
+            float distance = nc::random(200, 400);
+            float angle = nc::random(0, nc::TWO_PI);
+            nc::Vector2 position = nc::Vector2::Rotate({ 0.0f, distance }, angle);
+            enemy->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
+
+            m_scene.AddActor(enemy);
+        }
+        if (m_score > m_highScore) m_highScore = m_score;
+
+        break;
+    case Game::eState::PLAYER_DEAD:
+        m_lives = m_lives - 1;
+        m_state = (m_lives == 0) ? eState::GAME_OVER : eState::GAME_WAIT;
+        m_stateTimer = 3;
+        break;
+    case Game::eState::GAME_WAIT:
+        m_stateTimer -= dt;
+        if (m_stateTimer <= 0)
+        {
+            m_scene.RemoveAllActors();
+            m_state = eState::START_GAME;
+        }
+        break;
+    case Game::eState::GAME_OVER:
+        m_stateTimer -= dt;
+        if (m_stateTimer <= 0)
+        {
+            m_scene.RemoveAllActors();
+            m_state = eState::TITLE;
+        }
+        break;
+    default:
+        break;
     }
 
+    m_scene.Update(dt);
+
+    /*
     int x, y;
     Core::Input::GetMousePos(x, y);
     if (Core::Input::IsPressed(Core::Input::BUTTON_LEFT))
@@ -60,9 +122,9 @@ bool Game::Update(float dt)
         nc::Color color = colors[rand() % 4];
         g_particleSystem.Create({ x, y }, 0, 180, 30, 1, color, 100, 200);
     }
+    */
 
     g_particleSystem.Update(dt);
-    m_scene.Update(dt);
 
     return quit;
 }
@@ -73,6 +135,34 @@ void Game::Draw(Core::Graphics& graphics)
     graphics.DrawString(10, 10, std::to_string(m_frametime).c_str());
     graphics.DrawString(10, 20, std::to_string(1.0f / m_frametime).c_str());
 
-    g_particleSystem.Draw(graphics);
+    switch (m_state)
+    {
+    case Game::eState::TITLE:
+        graphics.DrawString(400, 300, "VECTREX");
+        break;
+    case Game::eState::START_GAME:
+        break;
+    case Game::eState::GAME:
+    {
+        
+    }
+        break;
+    case Game::eState::GAME_OVER:
+        graphics.DrawString(400, 300, "GAME OVER");
+        break;
+    default:
+        break;
+    }
+
+    graphics.SetColor(nc::Color{ 1, 1, 1 });
+
+    std::string score = "SCORE: " + std::to_string(m_score);
+    graphics.DrawString(700, 10, score.c_str());
+    std::string lives = "LIVES: " + std::to_string(m_lives);
+    graphics.DrawString(700, 20, lives.c_str());
+    score = "HIGH SCORE: " + std::to_string(m_highScore);
+    graphics.DrawString(350, 10, score.c_str());
+
     m_scene.Draw(graphics);
+    g_particleSystem.Draw(graphics);
 }

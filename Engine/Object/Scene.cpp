@@ -8,14 +8,12 @@ namespace nc
 	{
 		// nothing
 	}
+
 	void Scene::Shutdown()
 	{
-		for (nc::Actor* actor : m_actors)
-		{
-			delete actor;
-		}
-		m_actors.clear();
+		RemoveAllActors();
 	}
+
 	void Scene::Update(float dt)
 	{
 		// actors -> (actor) (actor) (actor) (actor)
@@ -41,6 +39,7 @@ namespace nc
 		{
 			if ((*iter)->IsDestroy())
 			{
+				(*iter)->Destroy();
 				delete (*iter);
 				iter = m_actors.erase(iter);
 			}
@@ -55,6 +54,7 @@ namespace nc
 			actor->Update(dt);
 		}
 	}
+
 	void Scene::Draw(Core::Graphics& graphics)
 	{
 		for (nc::Actor* actor : m_actors)
@@ -77,5 +77,14 @@ namespace nc
 			delete* iter;
 			m_actors.erase(iter);
 		}
+	}
+
+	void Scene::RemoveAllActors()
+	{
+		for (nc::Actor* actor : m_actors)
+		{
+			delete actor;
+		}
+		m_actors.clear();
 	}
 }

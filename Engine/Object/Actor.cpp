@@ -3,6 +3,17 @@
 
 namespace nc
 {
+	void Actor::Destroy()
+	{
+		for (auto child : m_children)
+		{
+			child->Destroy();
+			delete child;
+		}
+
+		m_children.clear();
+	}
+
 	void Actor::Load(std::istream& stream)
 	{
 		stream >> m_transform;
@@ -42,8 +53,15 @@ namespace nc
 	{
 		m_shape.Draw(graphics, m_transform);
 	}
+
 	float Actor::GetRadius()
 	{
 		return m_shape.GetRadius() * m_transform.scale;
+	}
+
+	void Actor::AddChild(Actor* child)
+	{
+		child->m_parent = this;
+		m_children.push_back(child);
 	}
 }

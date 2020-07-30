@@ -4,6 +4,8 @@
 #include <list>
 #include <vector>
 
+class Game;
+
 namespace nc
 {
 	class Scene
@@ -17,7 +19,10 @@ namespace nc
 
 		void AddActor(class Actor* actor);
 		void RemoveActor(class Actor* actor);
+		void RemoveAllActors();
 
+		void SetGame(Game* game) { m_game = game; }
+		Game* GetGame() { return m_game; }
 		
 		template <typename T>
 		T* GetActor()
@@ -58,6 +63,7 @@ namespace nc
 		
 
 	private:
+		Game* m_game;
 		std::list<class Actor*> m_actors;
 	};
 }
