@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Actors\Asteroid.cpp" />
     <ClCompile Include="Actors\Enemy.cpp" />
     <ClCompile Include="Actors\Locator.cpp" />
     <ClCompile Include="Actors\Player.cpp" />
@@ -164,6 +165,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Actors\Asteroid.h" />
     <ClInclude Include="Actors\Enemy.h" />
     <ClInclude Include="Actors\Locator.h" />
     <ClInclude Include="Actors\Player.h" />

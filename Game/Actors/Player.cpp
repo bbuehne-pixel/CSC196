@@ -21,12 +21,6 @@ namespace nc
             Actor::Load(stream);
 
             std::string line;
-
-            //std::getline(stream, line);
-            //m_thrust = stof(line);
-
-            //std::getline(stream, line);
-            //m_rotation = stof(line);
         }
         return success;
     }
@@ -38,7 +32,7 @@ namespace nc
         {
             m_fireTimer = 0;
 
-            g_audioSystem.PlayAudio("Laser_Shoot2");
+            g_audioSystem.PlayAudio("PlayerShot");
 
             nc::Projectile* projectile = new nc::Projectile;
             projectile->Load("projectile.txt");
@@ -105,6 +99,8 @@ namespace nc
         {
             m_destroy = true;
             m_scene->GetGame()->SetState(Game::eState::PLAYER_DEAD);
+
+            g_audioSystem.PlayAudio("PlayerExplosion");
 
             // set target null
             auto enemies = m_scene->GetActors<Enemy>();

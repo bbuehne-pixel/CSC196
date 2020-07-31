@@ -1,4 +1,4 @@
-#include "Enemy.h"
+#include "Asteroid.h"
 #include "Math/MyOwnMath.h"
 #include "Graphics/ParticleSystem.h"
 #include "Object/Scene.h"
@@ -8,7 +8,7 @@
 
 namespace nc
 {
-    bool Enemy::Load(const std::string& filename)
+    bool Asteroid::Load(const std::string& filename)
     {
         bool success = false;
 
@@ -28,28 +28,27 @@ namespace nc
         return success;
     }
 
-    void Enemy::Update(float dt)
+    void Asteroid::Update(float dt)
     {
-        nc::Vector2 targetPosition = (m_target) ? m_target->GetTransform().position : nc::Vector2{ 400, 300 };
-        nc::Vector2 direction = targetPosition - m_transform.position;
+        nc::Vector2 direction = m_transform.position;
         direction.Normalize();
-        nc::Vector2 Velocity = direction * 50.0f;// m_speed;
+        nc::Vector2 Velocity = direction * 30.0f;// m_speed;
         m_transform.position = m_transform.position + (Velocity * dt);
         m_transform.angle = std::atan2(direction.y, direction.x) + nc::DegreesToRadians(90);
 
         m_transform.Update();
     }
 
-    void Enemy::OnCollision(Actor* actor)
+    void Asteroid::OnCollision(Actor* actor)
     {
         if (actor->GetType() == eType::PROJECTILE)
         {
             m_destroy = true;
 
-            g_audioSystem.PlayAudio("EnemyExplosion");
+            g_audioSystem.PlayAudio("AsteroidExplosion");
 
             // set game points / score
-            m_scene->GetGame()->AddPoints(100);
+            m_scene->GetGame()->AddPoints(150);
 
             nc::Color colors[] = { {1,1,1}, nc::Color::red, {1,1,0}, {0,1,1} };
             nc::Color color = colors[rand() % 4];

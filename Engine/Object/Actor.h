@@ -16,8 +16,10 @@ namespace nc
 		{
 			PLAYER,
 			ENEMY,
+			UFO,
 			PROJECTILE,
-			LOCATOR
+			LOCATOR,
+			ASTEROID,
 		};
 
 	public:

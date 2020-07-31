@@ -6,6 +6,7 @@
 #include "Actors/Player.h"
 #include "Actors/Enemy.h"
 #include "Actors/Locator.h"
+#include "Actors/Asteroid.h"
 #include "Object/Scene.h"
 #include "Graphics/ParticleSystem.h"
 #include "Audio/AudioSystem.h"
@@ -17,6 +18,13 @@ void Game::Initialize()
 {
     m_scene.Startup();
     m_scene.SetGame(this);
+
+    g_audioSystem.AddAudio("PlayerShot", "Laser_Shoot2.wav");
+    g_audioSystem.AddAudio("PlayerExplosion", "Explosion.wav");
+    g_audioSystem.AddAudio("EnemyExplosion", "Explosion2.wav");
+    g_audioSystem.AddAudio("AsteroidExplosion", "Explosion9.wav");
+    g_audioSystem.AddAudio("SpawnSound", "Blip_Select10.wav");
+    g_audioSystem.AddAudio("UfoShot", "Laser_Shoot3.wav");
 }
 
 bool Game::Update(float dt)
@@ -45,12 +53,10 @@ bool Game::Update(float dt)
 
         Locator* locator = new Locator;
         locator->GetTransform().position = nc::Vector2{ 5, 2 };
-        //locator->GetTransform().angle = nc::DegreesToRadians(90);
         player->AddChild(locator);
 
         locator = new Locator;
         locator->GetTransform().position = nc::Vector2{ -5, 2 };
-        //locator->GetTransform().angle = nc::DegreesToRadians(90);
         player->AddChild(locator);
 
         for (size_t i = 0; i < 3; i++)
@@ -64,6 +70,30 @@ bool Game::Update(float dt)
             enemy->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
             m_scene.AddActor(enemy);
         }
+
+        for (size_t i = 0; i < 2; i++)
+        {
+            nc::Asteroid* asteroid = new nc::Asteroid;
+            asteroid->Load("asteroid.txt");
+            float distance = nc::random(300, 600);
+            float angle = nc::random(0, nc::TWO_PI);
+            nc::Vector2 position = nc::Vector2::Rotate({ 0.0f, distance }, angle);
+            asteroid->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
+            m_scene.AddActor(asteroid);
+        }
+
+        for (size_t i = 0; i < 1; i++)
+        {
+            nc::Enemy* bigenemy = new nc::Enemy;
+            bigenemy->Load("bigenemy.txt");
+            bigenemy->SetTarget(m_scene.GetActor<nc::Player>());
+            float distance = nc::random(300, 600);
+            float angle = nc::random(0, nc::TWO_PI);
+            nc::Vector2 position = nc::Vector2::Rotate({ 0.0f, distance }, angle);
+            bigenemy->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
+            m_scene.AddActor(bigenemy);
+        }
+
         m_state = eState::GAME;
     }
         break;
@@ -80,8 +110,18 @@ bool Game::Update(float dt)
             float angle = nc::random(0, nc::TWO_PI);
             nc::Vector2 position = nc::Vector2::Rotate({ 0.0f, distance }, angle);
             enemy->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
-
             m_scene.AddActor(enemy);
+
+            nc::Asteroid* asteroid = new nc::Asteroid;
+            asteroid->Load("asteroid.txt");
+            asteroid->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
+            m_scene.AddActor(asteroid);
+
+            nc::Enemy* bigenemy = new nc::Enemy;
+            bigenemy->Load("bigenemy.txt");
+            bigenemy->SetTarget(m_scene.GetActor<nc::Player>());
+            bigenemy->GetTransform().position = m_scene.GetActor<nc::Player>()->GetTransform().position + position;
+            m_scene.AddActor(bigenemy);
         }
         if (m_score > m_highScore) m_highScore = m_score;
 
@@ -113,18 +153,9 @@ bool Game::Update(float dt)
 
     m_scene.Update(dt);
 
-    /*
-    int x, y;
-    Core::Input::GetMousePos(x, y);
-    if (Core::Input::IsPressed(Core::Input::BUTTON_LEFT))
-    {
-        nc::Color colors[] = { { 1,1,1 }, nc::Color::red, { 1,1,0 }, { 0,1,1 } };
-        nc::Color color = colors[rand() % 4];
-        g_particleSystem.Create({ x, y }, 0, 180, 30, 1, color, 100, 200);
-    }
-    */
-
     g_particleSystem.Update(dt);
+
+    g_audioSystem.Update(dt);
 
     return quit;
 }

@@ -6,7 +6,7 @@
 
 Game game;
 
-bool Update(float dt) // dt = (1 / 60) = 0.01667 | (1 / 90) = 0.0111
+bool Update(float dt)
 {
     bool quit = game.Update(dt);
 
@@ -37,7 +37,7 @@ int main()
     Core::GameLoop();
     Core::Shutdown();
 
-    // shutdown engine
+    //shutdown engine
     //g_particleSystem.Shutdown();
     //g_audioSystem.Shutdown();
     //scene.Shutdown();
